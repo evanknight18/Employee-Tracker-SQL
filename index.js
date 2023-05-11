@@ -51,7 +51,7 @@ async function main() {
       break;
 
     case "Add a role":
-      const departments = await queries.viewDepartments();
+      const departmentsToAddRole = await queries.viewDepartments();
       const { title, salary, departmentId } = await inquirer.prompt([
         {
           type: "input",
@@ -68,7 +68,7 @@ async function main() {
           type: "list",
           name: "departmentId",
           message: "Select the department for the new role:",
-          choices: departments.map((department) => ({
+          choices: departmentsToAddRole.map((department) => ({
             name: department.name,
             value: department.id,
           })),
@@ -79,8 +79,8 @@ async function main() {
       break;
 
     case "Add an employee":
-      const roles = await queries.viewRoles();
-      const employees = await queries.viewEmployees();
+      const rolesToAddEmployee = await queries.viewRoles();
+      const employeesToAddEmployee = await queries.viewEmployees();
       const { firstName, lastName, roleId, managerId } = await inquirer.prompt([
         {
           type: "input",
@@ -96,7 +96,7 @@ async function main() {
           type: "list",
           name: "roleId",
           message: "Select the role for the new employee:",
-          choices: roles.map((role) => ({ name: role.title, value: role.id })),
+          choices: rolesToAddEmployee.map((role) => ({ name: role.title, value: role.id })),
         },
         {
           type: "list",
@@ -104,7 +104,7 @@ async function main() {
           message: "Select the manager for the new employee:",
           choices: [
             { name: "None", value: null },
-            ...employees.map((employee) => ({
+            ...employeesToAddEmployee.map((employee) => ({
               name: `${employee.first_name} ${employee.last_name}`,
               value: employee.id,
             })),
@@ -115,41 +115,42 @@ async function main() {
       console.log(`Added employee: ${firstName} ${lastName}`);
       break;
 
-    case "Update an employee role":
-      const employees = await queries.viewEmployees();
-      const roles = await queries.viewRoles();
-      const { employeeId, newRoleId } = await inquirer.prompt([
-        {
-          type: "list",
-          name: "employeeId",
-          message: "Select the employee to update:",
-          choices: employees.map((employee) => ({
-            name: `${employee.first_name} ${employee.last_name}`,
-            value: employee.id,
-          })),
-        },
-        {
-          type: "list",
-          name: "newRoleId",
-          message: "Select the new role for the employee:",
-          choices: roles.map((role) => ({ name: role.title, value: role.id })),
-        },
-      ]);
-      await queries.updateEmployeeRole(employeeId, newRoleId);
-      console.log(`Updated role for employee with ID ${employeeId}`);
-      break;
-
-    case "Exit":
-      console.log("Goodbye!");
-      process.exit(0);
-      break;
-
-    default:
-      console.log("Invalid action");
+      case "Update an employee role":
+        const employeesToUpdateRole = await queries.viewEmployees();
+        const rolesToUpdateRole = await queries.viewRoles();
+        const { employeeId, newRoleId } = await inquirer.prompt([
+          {
+            type: "list",
+            name: "employeeId",
+            message: "Select the employee to update:",
+            choices: employeesToUpdateRole.map((employee) => ({
+              name: `${employee.first_name} ${employee.last_name}`,
+              value: employee.id,
+            })),
+          },
+          {
+            type: "list",
+            name: "newRoleId",
+            message: "Select the new role for the employee:",
+            choices: rolesToUpdateRole.map((role) => ({ name: role.title, value: role.id })),
+          },
+        ]);
+        await queries.updateEmployeeRole(employeeId, newRoleId);
+        console.log(`Updated role for employee with ID ${employeeId}`);
+        break;
+  
+      case "Exit":
+        console.log("Goodbye!");
+        process.exit(0);
+        break;
+  
+      default:
+        console.log("Invalid action");
+    }
+  
+    // Run the main function again to display the menu
+    main();
   }
-
-  // Run the main function again to display the menu
+  
   main();
-}
-
-main();
+  
