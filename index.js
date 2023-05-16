@@ -4,331 +4,194 @@ const db = require('./db');
 
 const queries = require('./queries');
 
-
-
 async function main() {
-    let departments, roles, employees; // Declare all variables at the start
-  
-    const { action } = await inquirer.prompt([
-      {
-        type: "list",
-        name: "action",
-        message: "What would you like to do?",
-        choices: [
-          "View all departments",
-          "View all roles",
-          "View all employees",
-          "View employees by manager",
-          "View employees by department",
-          "View total department budget",
-          "Add a department",
-          "Add a role",
-          "Add an employee",
-          "Update an employee role",
-          "Update an employee manager",
-          "Delete a department",
-          "Delete a role",
-          "Delete an employee",
-          "Exit",
-        ],
-      },
-    ]);
-    
-    switch (action) {
-        case "View all departments":
-          departments = await queries.viewDepartments();
-          console.table(departments);
-          break;
-    
-        case "View all roles":
-          roles = await queries.viewRoles();
-          console.table(roles);
-          break;
-    
-        case "View all employees":
-          employees = await queries.viewEmployees();
-          console.table(employees);
-          break;
-    
-        case "View employees by manager":
-          employees = await queries.viewEmployeesByManager();
-          console.table(employees);
-          break;
-    
-        case "View employees by department":
-          departments = await queries.viewEmployeesByDepartment();
-          console.table(departments);
-          break;
-    
-        case "View total department budget":
-          const budget = await queries.viewTotalDepartmentBudget();
-          console.log(`Total budget: ${budget}`);
-          break;
+  const { action } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "action",
+      message: "What would you like to do?",
+      choices: [
+        "View all departments",
+        "View all roles",
+        "View all employees",
+        "View employees by manager",
+        "View employees by department",
+        "View total department budget",
+        "Add a department",
+        "Add a role",
+        "Add an employee",
+        "Update an employee role",
+        "Update an employee manager",
+        "Update an employee's name",
+        "Update a manager's name",
+        "Delete a department",
+        "Delete a role",
+        "Delete an employee",
+        "Exit",
+      ],
+    },
+  ]);
+
+  switch (action) {
+    case "View all departments":
+      const departments = await queries.viewDepartments();
+      console.table(departments);
+      break;
+
+    case "View all roles":
+      const roles = await queries.viewRoles();
+      console.table(roles);
+      break;
+
+    case "View all employees":
+      const employees = await queries.viewEmployees();
+      console.table(employees);
+      break;
 
     case "Add a department":
-      const { departmentName } = await inquirer.prompt([
-        {
-          type: "input",
-          name: "departmentName",
-          message: "Enter the name of the new department:",
-        },
-      ]);
+      const { departmentName } = await inquirer.prompt({
+        type: "input",
+        name: "departmentName",
+        message: "What is the name of the department?",
+      });
       await queries.addDepartment(departmentName);
-      console.log(`Added department: ${departmentName}`);
+      console.log(`Added new department: ${departmentName}`);
       break;
 
     case "Add a role":
-      const departmentsToAddRole = await queries.viewDepartments();
-      const { title, salary, departmentId } = await inquirer.prompt([
+      const roleResponses = await inquirer.prompt([
         {
           type: "input",
           name: "title",
-          message: "Enter the title of the new role:",
+          message: "What is the title of the role?",
         },
         {
           type: "input",
           name: "salary",
-          message: "Enter the salary for the new role:",
-          validate: (value) => !isNaN(value) || "Salary must be a number",
+          message: "What is the salary of the role?",
         },
         {
-          type: "list",
+          type: "input",
           name: "departmentId",
-          message: "Select the department for the new role:",
-          choices: departmentsToAddRole.map((department) => ({
-            name: department.name,
-            value: department.id,
-          })),
+          message: "What is the department ID of the role?",
         },
       ]);
-      await queries.addRole(title, salary, departmentId);
-      console.log(`Added role: ${title}`);
+      await queries.addRole(roleResponses.title, roleResponses.salary, roleResponses.departmentId);
+      console.log(`Added new role: ${roleResponses.title}`);
       break;
 
     case "Add an employee":
-      const rolesToAddEmployee = await queries.viewRoles();
-      const employeesToAddEmployee = await queries.viewEmployees();
-      const { firstName, lastName, roleId, managerId } = await inquirer.prompt([
+      const employeeResponses = await inquirer.prompt([
         {
           type: "input",
           name: "firstName",
-          message: "Enter the first name of the new employee:",
+          message: "What is the employee's first name?",
         },
         {
           type: "input",
           name: "lastName",
-          message: "Enter the last name of the new employee:",
+          message: "What is the employee's last name?",
         },
         {
-          type: "list",
+          type: "input",
           name: "roleId",
-          message: "Select the role for the new employee:",
-          choices: rolesToAddEmployee.map((role) => ({
-            name: role.title,
-            value: role.id,
-          })),
+          message: "What is the employee's role ID?",
         },
         {
-          type: "list",
+          type: "input",
           name: "managerId",
-          message: "Select the manager for the new employee:",
-          choices: [
-            {
-              name: "None",
-              value: null,
-            },
-            ...employeesToAddEmployee.map((employee) => ({
-              name: `${employee.first_name} ${employee.last_name}`,
-              value: employee.id,
-            })),
-          ],
+          message: "What is the employee's manager ID?",
         },
       ]);
-      await queries.addEmployee(firstName, lastName, roleId, managerId);
-      console.log(`Added employee: ${firstName} ${lastName}`);
+      await queries.addEmployee(employeeResponses.firstName, employeeResponses.lastName, employeeResponses.roleId, employeeResponses.managerId);
+      console.log(`Added new employee: ${employeeResponses.firstName} ${employeeResponses.lastName}`);
       break;
 
-    case "Update an employee role":
-      const employeesToUpdateRole = await queries.viewEmployees();
-      const rolesToUpdateRole = await queries.viewRoles();
-      const { employeeId, newRoleId } = await inquirer.prompt([
-        {
-          type: "list",
-          name: "employeeId",
-          message: "Select the employee to update:",
-          choices: employeesToUpdateRole.map((employee) => ({
-            name: `${employee.first_name} ${employee.last_name}`,
-            value: employee.id,
-          })),
-        },
-        {
-          type: "list",
-          name: "newRoleId",
-          message: "Select the new role for the employee:",
-          choices: rolesToUpdateRole.map((role) => ({
-            name: role.title,
-            value: role.id,
-          })),
-        },
-      ]);
-      await queries.updateEmployeeRole(employeeId, newRoleId);
-      console.log(`Updated role for employee with ID ${employeeId}`);
-      break;
-
-    case "Update employee manager":
-      employees = await queries.viewEmployees();
-      const { employeeIdToUpdateManager, newManagerId } = await inquirer.prompt(
-        [
+      case "Update an employee's name":
+        const updateEmployeeResponses = await inquirer.prompt([
           {
-            type: "list",
-            name: "employeeIdToUpdateManager",
-            message: "Select the employee to update their manager:",
-            choices: employees.map((employee) => ({
-              name: `${employee.first_name} ${employee.last_name}`,
-              value: employee.id,
-            })),
+            type: "input",
+            name: "employeeId",
+            message: "What is the ID of the employee you want to update?",
           },
           {
-            type: "list",
-            name: "newManagerId",
-            message: "Select the new manager for the employee:",
-            choices: [
-              {
-                name: "None",
-                value: null,
-              },
-              ...employees.map((employee) => ({
-                name: `${employee.first_name} ${employee.last_name}`,
-                value: employee.id,
-              })),
-            ],
+            type: "input",
+            name: "firstName",
+            message: "What is the new first name of the employee?",
           },
-        ]
-      );
-      await queries.updateEmployeeManager(
-        employeeIdToUpdateManager,
-        newManagerId
-      );
-      console.log(
-        `Updated manager for employee with ID ${employeeIdToUpdateManager}`
-      );
-      break;
-
-    case "View employees by manager":
-      employees = await queries.viewEmployeesByManager();
-      console.table(employees);
-      break;
-
-    case "View employees by department":
-      employees = await queries.viewEmployeesByDepartment();
-      console.table(employees);
-      break;
-
-    case "Delete a department":
-      departments = await queries.viewDepartments();
-      const { departmentIdToDelete } = await inquirer.prompt([
-        {
-          type: "list",
-          name: "departmentIdToDelete",
-          message: "Select the department to delete:",
-          choices: departments.map((department) => ({
-            name: department.name,
-            value: department.id,
-          })),
-        },
-      ]);
-      await queries.deleteDepartment(departmentIdToDelete);
-      console.log(`Deleted department with ID ${departmentIdToDelete}`);
-      break;
-
-      case "Delete a role":
-        roles = await queries.viewRoles();
-        const { roleIdToDelete } = await inquirer.prompt([
           {
-            type: "list",
-            name: "roleIdToDelete",
-            message: "Select the role to delete:",
-            choices: roles.map((role) => ({ name: role.title, value: role.id })),
+            type: "input",
+            name: "lastName",
+            message: "What is the new last name of the employee?",
           },
         ]);
-      
-        // Get all employees assigned to the role to be deleted
-        const employeesInRole = await queries.getEmployeesByRoleId(roleIdToDelete);
-      
-        if (employeesInRole.length > 0) {
-          // If there are employees assigned to the role, ask the user to reassign them to a new role
-          roles = await queries.viewRoles();
-          const { newRoleId } = await inquirer.prompt([
-            {
-              type: "list",
-              name: "newRoleId",
-              message: "This role has employees assigned to it. Please select a new role for these employees:",
-              choices: roles
-                .filter((role) => role.id !== roleIdToDelete)
-                .map((role) => ({ name: role.title, value: role.id })),
-            },
-          ]);
-      
-          // Update each employee's role
-          for (let employee of employeesInRole) {
-            await queries.updateEmployeeRole(employee.id, newRoleId);
-          }
-        }
-      
-        // Now that no employees are assigned to the role, it can be deleted
-        await queries.deleteRole(roleIdToDelete);
-        console.log(`Deleted role with ID ${roleIdToDelete}`);
+        await queries.updateEmployeeName(updateEmployeeResponses.employeeId, updateEmployeeResponses.firstName, updateEmployeeResponses.lastName);
+        console.log(`Updated employee ID ${updateEmployeeResponses.employeeId}'s name to ${updateEmployeeResponses.firstName} ${updateEmployeeResponses.lastName}`);
         break;
-      
+  
+      case "Update a manager's name":
+        const updateManagerResponses = await inquirer.prompt([
+          {
+            type: "input",
+            name: "managerId",
+            message: "What is the ID of the manager you want to update?",
+          },
+          {
+            type: "input",
+            name: "firstName",
+            message: "What is the new first name of the manager?",
+          },
+          {
+            type: "input",
+            name: "lastName",
+            message: "What is the new last name of the manager?",
+          },
+        ]);
+        await queries.updateEmployeeName(updateManagerResponses.managerId, updateManagerResponses.firstName, updateManagerResponses.lastName);
+        console.log(`Updated manager ID ${updateManagerResponses.managerId}'s name to ${updateManagerResponses.firstName} ${updateManagerResponses.lastName}`);
+        break;
 
-    case "Delete an employee":
-      employees = await queries.viewEmployees();
-      const { employeeIdToDelete } = await inquirer.prompt([
-        {
-          type: "list",
-          name: "employeeIdToDelete",
-          message: "Select the employee to delete:",
-          choices: employees.map((employee) => ({
-            name: `${employee.first_name} ${employee.last_name}`,
-            value: employee.id,
-          })),
-        },
-      ]);
-      await queries.deleteEmployee(employeeIdToDelete);
-      console.log(`Deleted employee with ID ${employeeIdToDelete}`);
+    case "Delete a department":
+      const { departmentId } = await inquirer.prompt({
+        type: "input",
+        name: "departmentId",
+        message: "What is the ID of the department you want to delete?",
+      });
+      await queries.deleteDepartment(departmentId);
+      console.log(`Deleted department with ID: ${departmentId}`);
       break;
 
-    case "View the utilized budget of a department":
-      departments = await queries.viewDepartments();
-      const { departmentIdToViewBudget } = await inquirer.prompt([
-        {
-          type: "list",
-          name: "departmentIdToViewBudget",
-          message: "Select the department to view its utilized budget:",
-          choices: departments.map((department) => ({
-            name: department.name,
-            value: department.id,
-          })),
-        },
-      ]);
-      const utilizedBudget = await queries.viewDepartmentBudget(
-        departmentIdToViewBudget
-      );
-      console.log(
-        `Utilized budget for department ID ${departmentIdToViewBudget}: $${utilizedBudget}`
-      );
+    case "Delete a role":
+      const { roleId } = await inquirer.prompt({
+        type: "input",
+        name: "roleId",
+        message: "What is the ID of the role you want to delete?",
+      });
+      await queries.deleteRole(roleId);
+      console.log(`Deleted role with ID: ${roleId}`);
+      break;
+
+    case "Delete an employee":
+      const { employeeId } = await inquirer.prompt({
+        type: "input",
+        name: "employeeId",
+        message: "What is the ID of the employee you want to delete?",
+      });
+      await queries.deleteEmployee(employeeId);
+      console.log(`Deleted employee with ID: ${employeeId}`);
       break;
 
     case "Exit":
-      console.log("Goodbye!");
-      process.exit(0);
+      console.log("Exiting...");
+      process.exit();
       break;
 
     default:
-      console.log("Invalid action");
+      console.log("Invalid action. Please choose a valid action.");
+      main();
+      break;
   }
-
-  // Run the main function again to display the menu
+  // re-run the prompt
   main();
 }
 

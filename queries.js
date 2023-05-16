@@ -52,6 +52,11 @@ class QueryClass {
     ]);
   }
 
+  async updateEmployeeName(employee_id, first_name, last_name) {
+    await this.db.query("UPDATE employee SET first_name = ?, last_name = ? WHERE id = ?", [first_name, last_name, employee_id]);
+  }
+  
+
   async viewEmployeesByManager(manager_id) {
     const [rows] = await this.db.query("SELECT * FROM employee WHERE manager_id = ?", [manager_id]);
     return rows;
